@@ -1,0 +1,10 @@
+{
+  "name": "authkestra",
+  "description": "Task-shaped skills for integrating Authkestra into a Rust app.",
+  "version": "0.7.0",
+  "author": { "name": "Authkestra", "url": "https://github.com/Authkestra" },
+  "homepage": "https://github.com/Authkestra/skills",
+  "repository": "https://github.com/Authkestra/skills",
+  "license": "MIT OR Apache-2.0",
+  "keywords": ["rust", "authentication", "oauth2", "oidc", "authkestra"]
+}

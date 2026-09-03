@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Daily, so a new authkestra release that invalidates a skill surfaces here
+    # without anyone remembering to check.
+    - cron: '17 6 * * *'
+  repository_dispatch:
+    types: [authkestra-release]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Manifests and skill frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/validate.py
+
+  fixtures:
+    name: Build fixtures against the published crate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+      - name: Build every fixture
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          found=0
+          for manifest in fixtures/*/Cargo.toml; do
+            found=1
+            echo "::group::$manifest"
+            # Fixtures must resolve authkestra from crates.io, so refresh the
+            # index rather than trusting a lockfile.
+            cargo update --manifest-path "$manifest"
+            cargo check --manifest-path "$manifest"
+            echo "::endgroup::"
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No fixtures yet - nothing to build."
+          fi
