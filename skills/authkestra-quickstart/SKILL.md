@@ -5,24 +5,43 @@ description: Add Authkestra authentication to a Rust axum or actix-web applicati
 
 # Adding Authkestra to a Rust app
 
-Targets `authkestra` **0.7.x**. For older code — especially anything importing `authkestra-core`,
+Targets `authkestra` **0.9.x**. For older code — especially anything importing `authkestra-core`,
 `authkestra-flow`, `authkestra-token` or `authkestra-session`, which no longer exist — use the
 `authkestra-upgrade` skill first.
+
+Everything below is compiled against the published crate by
+[`fixtures/quickstart-axum`](../../fixtures/quickstart-axum). If a step here is wrong, that fixture
+stops building.
 
 Work through the five steps in order. Each one constrains the next, and skipping ahead produces
 compiler errors that look unrelated to their cause.
 
-## 1. Pick the facade features
+## 1. Pick the dependencies
 
-Depend on the `authkestra` facade, not the individual crates. It re-exports everything behind
-feature flags:
+Start from the `authkestra` facade, but expect to name two sub-crates as well. This is the shape that
+actually compiles on 0.9.x:
 
 ```toml
 [dependencies]
-authkestra = { version = "0.7", features = ["axum", "session", "github"] }
+authkestra = { version = "0.9", features = ["axum", "session", "github"] }
+authkestra-engine = { version = "0.9", default-features = false, features = ["memory", "session", "token"] }
+authkestra-axum = { version = "0.9", default-features = false, features = ["macros", "session", "token"] }
 ```
 
-| Feature | Gives you |
+**Why the facade is not enough yet**, so you recognise the symptom rather than fighting it:
+
+- The facade forwards `session`, `token`, `oidc`, `resource`, `axum`, `actix` and the three providers
+  — and **no store backend, no `webauthn`, no `totp`, no `captcha`, no `macros`, no `op`**. So
+  `MemoryStore` is compiled out of a facade-only build and the import fails with "could not find
+  `memory` in `store`" ([#325](https://github.com/marcjazz/authkestra/issues/325)).
+- `#[derive(AxumState)]` expands to unqualified `authkestra_engine::` and `authkestra_axum::` paths,
+  so both crates must be nameable in *your* Cargo.toml. The error names a crate you never wrote down
+  ([#332](https://github.com/marcjazz/authkestra/issues/332)).
+
+Anything beyond sessions and OAuth — passkeys, TOTP, a SQL store — is sub-crates only. That is not a
+preference; the features do not exist on the facade.
+
+| Facade feature | Gives you |
 | --- | --- |
 | `session` | Session management and the session stores |
 | `token` | `TokenManager`, JWT issuance and validation |
@@ -35,9 +54,9 @@ authkestra = { version = "0.7", features = ["axum", "session", "github"] }
 Two rules that save a debugging session:
 
 - **Adapters have their own features.** `authkestra-axum` and `authkestra-actix` carry `op`,
-  `devsig`, `captcha`, `macros`, `session`, `token` and `resource` flags of their own. The facade's
-  `axum`/`actix` features turn on a useful subset, not all of them. Reaching for OP or device-signature
-  functionality means enabling the adapter's feature too.
+  `devsig`, `captcha`, `macros`, `session`, `token` and `resource` flags of their own, and the facade
+  forwards none of them. Reaching for OP, macros or device signatures means depending on the adapter
+  directly and enabling its feature there.
 - **A missing feature usually reports as a missing method**, not as a missing crate. If a method the
   docs promise does not exist, suspect features before suspecting your code — see the
   `authkestra-features` skill.
@@ -70,20 +89,25 @@ This is deliberate: **methods do not exist until their prerequisite is supplied.
 is absent until a `session_store` is set; token methods are absent until a `TokenManager` is.
 
 ```rust
-use authkestra::Authkestra;
-use authkestra_engine::store::memory::MemoryStore;
-use authkestra_engine::{OAuth2Flow, SessionStore};
-use authkestra_providers::github::GithubProvider;
 use std::sync::Arc;
 
-let github_provider = GithubProvider::new(client_id, client_secret, redirect_uri);
+use authkestra::flow::OAuth2Flow;
+use authkestra::providers::github::GithubProvider;
+use authkestra_engine::store::memory::MemoryStore;
+use authkestra_engine::{Engine, SessionStore};
+
+let provider = GithubProvider::new(client_id, client_secret, redirect_uri);
 let session_store: Arc<dyn SessionStore> = Arc::new(MemoryStore::default());
 
-let engine = Authkestra::builder()
-    .provider(OAuth2Flow::new(github_provider))
+let engine = Engine::builder()
     .session_store(session_store)
+    .provider(OAuth2Flow::new(provider))
     .build();
 ```
+
+Only `session_store` and `token_manager` move the typestate. Everything else returns `Self`, which is
+why composing methods and providers is just a longer chain and why the order of the rest does not
+matter.
 
 So "no method named `create_session`" is not a bug — it is the builder reporting that no session
 store was provided. Read it as a missing prerequisite, not a missing import.
@@ -93,7 +117,8 @@ store was provided. Read it as a missing prerequisite, not a missing import.
 Authkestra never enforces a schema. Data access is defined entirely by traits — `KvStore`,
 `SessionStore`, `CredentialStore`, and `OpStore` for the OP.
 
-- **Prototyping**: `MemoryStore`.
+- **Prototyping**: `MemoryStore`, from `authkestra-engine` with its `memory` feature — not through
+  the facade, see step 1.
 - **Redis**: the engine's `redis` feature.
 - **SQL**: `authkestra-store-sqlx` (Postgres, MySQL, SQLite).
 - **Your own database or ORM**: implement the traits yourself — use the `authkestra-store` skill,
