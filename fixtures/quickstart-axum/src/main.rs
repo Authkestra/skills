@@ -6,16 +6,17 @@
 
 use std::sync::Arc;
 
-use authkestra_axum::{AuthSession, AxumError, AxumExt, AxumState};
-use authkestra::core::{Engine, SessionStore};
-use authkestra::flow::OAuth2Flow;
+use authkestra::axum::{AuthSession, AxumError, AxumExt, AxumState};
+use authkestra::core::{AkWebAppEngine, OAuth2Flow, SessionStore};
 use authkestra::providers::github::GithubProvider;
-use authkestra_engine::store::memory::MemoryStore;
+use authkestra::store::memory::MemoryStore;
+use authkestra::Authkestra;
 
 #[derive(Clone, AxumState)]
+#[authkestra(crate = ::authkestra::axum)]
 struct AppState {
     #[authkestra(engine)]
-    auth: authkestra_engine::AkWebAppEngine,
+    auth: AkWebAppEngine,
 }
 
 fn main() {
@@ -29,7 +30,7 @@ fn main() {
 
     // `create_session` does not exist until `session_store` is supplied. That
     // is the typestate, and it is the claim this fixture pins.
-    let engine = Engine::builder()
+    let engine = Authkestra::builder()
         .session_store(session_store)
         .provider(OAuth2Flow::new(provider))
         .build();

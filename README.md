@@ -28,21 +28,21 @@ tool — point it at `skills/`, or just read them.
 | `authkestra-social-login` | GitHub/Google/Discord or a custom provider, and the stateless-OAuth cookie contract. |
 | `authkestra-op` | "Be my own identity provider." PKCE, loopback redirects, DPoP, discovery/JWKS, custom grants. |
 | `authkestra-resource-server` | Token validation at an API edge: `ValidationConfig`, multi-issuer JWKS, extractors. |
-| `authkestra-mfa` | Passkeys, TOTP, and device-bound signatures via `authkestra-devsig`. |
-| `authkestra-upgrade` | Code written against the crates RFC-001 dissolved, and release-to-release breaks. |
+| `authkestra-mfa` | Passkeys, TOTP, Magic Link, OTP, Recovery Codes, `ReproofRequirement`, and device-bound signatures via `authkestra-devsig`. |
+| `authkestra-upgrade` | Code written against the crates RFC-001 dissolved, and release-to-release breaks (through 0.13). |
 | `authkestra-troubleshoot` | Runtime symptoms → cause: rustls panics, lost OAuth state, clock skew. |
 
-Skills ship as they are written; the table above is the target set. See
-[the tracking epic](https://github.com/marcjazz/authkestra/issues/315) for status.
+See [the tracking epic](https://github.com/marcjazz/authkestra/issues/315) for background.
 
 ## Versioning
 
-This pack's minor version tracks the crate's: **`skills` 0.7.x targets `authkestra` 0.7.x**. Every
+This pack's minor version tracks the crate's: **`skills` 0.13.x targets `authkestra` 0.13.x**. Every
 `SKILL.md` also states the version it was written against, and cites examples in the main repository
 by tag rather than by `main`, so a citation always points at code matching that version.
 
 | Pack | `authkestra` |
 | --- | --- |
+| 0.13.x | 0.13.x |
 | 0.7.x | 0.7.x |
 
 ## How these stay true
