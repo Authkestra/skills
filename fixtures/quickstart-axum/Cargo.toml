@@ -9,16 +9,8 @@ publish = false
 
 [dependencies]
 # The facade only, from crates.io, exactly as the skill tells integrators to
-# write it. If this stops resolving or compiling, the skill is wrong.
-authkestra = { version = "0.9", features = ["axum", "session", "github"] }
-# Also required, and the skill now says so. Two reasons, both verified by this
-# fixture failing without it:
-#   - the facade forwards no store-backend feature, so `MemoryStore` is
-#     compiled out (marcjazz/authkestra#325)
-#   - `#[derive(AxumState)]` expands to bare `authkestra_engine::` and
-#     `authkestra_axum::` paths, so both crates must be nameable in the
-#     integrator's own Cargo.toml (marcjazz/authkestra#332)
-authkestra-engine = { version = "0.9", default-features = false, features = ["memory", "session", "token"] }
-authkestra-axum = { version = "0.9", default-features = false, features = ["macros", "session", "token"] }
+# write it. In 0.13+, the facade forwards `memory` (#325) and `#[derive(AxumState)]`
+# resolves through `authkestra::` (#332), so no sub-crate dependencies are needed.
+authkestra = { version = "0.13", features = ["axum", "memory", "github"] }
 axum = "0.8"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
