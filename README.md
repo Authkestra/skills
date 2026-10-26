@@ -1,67 +1,77 @@
-# Authkestra skills
+# Authkestra Agent Skills Pack
 
-Official agent skill pack for **integrating** [Authkestra](https://github.com/marcjazz/authkestra) —
-the framework-agnostic authentication orchestrator for Rust — into your own application.
+[![Agent Skills](https://img.shields.io/badge/agent%20skills-Authkestra%2Fskills-informational)](https://github.com/Authkestra/skills)
+[![Landing Page](https://img.shields.io/badge/landing-authkestra.com-f4845f)](https://authkestra.com)
+[![Documentation](https://img.shields.io/badge/docs-docs.authkestra.com-e85d2f)](https://docs.authkestra.com)
+[![crates.io](https://img.shields.io/crates/v/authkestra.svg?color=ce422b)](https://crates.io/crates/authkestra)
+[![Single-File Corpus](https://img.shields.io/badge/corpus-llms--full.txt-orange)](https://docs.authkestra.com/llms-full.txt)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/Authkestra/authkestra)
 
-Authkestra is a composition library: nothing works until you have picked the right feature flags,
-satisfied a typestate builder, implemented storage traits against your own database, and wired an
-adapter's extractors. These skills carry that knowledge in a form a coding agent can act on, so it
-stops guessing at an API surface where guessing produces authentication bugs.
+Official Claude Code and AI agent skill pack for integrating and orchestrating **[Authkestra](https://authkestra.com)** — The Compile-Time Safe Identity & AI Agent Authorization Engine for Rust.
 
-## Install
+Authkestra is an embedded composition library: nothing works until you have picked the right Cargo feature flags, satisfied the typestate builder (`Engine<S, T>`), implemented storage traits against your own database, and wired adapter extractors. These skills equip coding agents with exact architectural knowledge, eliminating hallucinations and runtime security pitfalls.
 
-```
+---
+
+## 📦 Installation
+
+### Claude Code Plugin Marketplace
+```bash
 /plugin marketplace add Authkestra/skills
 /plugin install authkestra@authkestra
 ```
 
-The skills are plain Markdown with YAML frontmatter, so they are equally usable by any other agent
-tool — point it at `skills/`, or just read them.
+### Direct Agent Ingestion
+The skills are structured as standard Markdown files with YAML frontmatter located in `skills/`. Point your agent directly at `skills/` or reference the single-file corpus:
+- **LLM Context Summary**: [`https://authkestra.com/llms.txt`](https://authkestra.com/llms.txt)
+- **Comprehensive Corpus**: [`https://docs.authkestra.com/llms-full.txt`](https://docs.authkestra.com/llms-full.txt)
 
-## Skills
+---
 
-| Skill | Answers |
-| --- | --- |
-| `authkestra-quickstart` | "Add auth to my axum/actix app." Features, TLS backend, the typestate builder, store choice, extractor wiring. |
-| `authkestra-features` | "Why doesn't this compile?" Missing Cargo feature vs. unmet typestate prerequisite. |
-| `authkestra-store` | "Use my own Postgres/Diesel/SeaORM." The store traits, validated with `authkestra-store-testsuite`. |
-| `authkestra-social-login` | GitHub/Google/Discord or a custom provider, and the stateless-OAuth cookie contract. |
-| `authkestra-op` | "Be my own identity provider." PKCE, loopback redirects, DPoP, discovery/JWKS, custom grants. |
-| `authkestra-resource-server` | Token validation at an API edge: `ValidationConfig`, multi-issuer JWKS, extractors. |
-| `authkestra-mfa` | Passkeys, TOTP, Magic Link, OTP, Recovery Codes, `ReproofRequirement`, and device-bound signatures via `authkestra-devsig`. |
-| `authkestra-upgrade` | Code written against the crates RFC-001 dissolved, and release-to-release breaks (through 0.13). |
-| `authkestra-troubleshoot` | Runtime symptoms → cause: rustls panics, lost OAuth state, clock skew. |
+## 🛠️ Included Skills
 
-See [the tracking epic](https://github.com/marcjazz/authkestra/issues/315) for background.
+| Skill | Description & Key Topics |
+| :--- | :--- |
+| `authkestra-quickstart` | "Add auth to my Axum or Actix app." Feature flags, TLS backend selection, typestate builder setup, store choice, extractor wiring. |
+| `authkestra-features` | "Why doesn't this compile?" Distinguishes missing Cargo features from unmet typestate builder prerequisites. |
+| `authkestra-store` | "Use my own Postgres / Diesel / SeaORM store." Implements `KvStore`, `SessionStore`, `CredentialStore`, and `OpStore` validated via `authkestra-store-testsuite`. |
+| `authkestra-social-login` | GitHub, Google, Discord, or custom OIDC providers, plus the stateless OAuth2 encrypted-cookie contract. |
+| `authkestra-mcp` | Model Context Protocol tool security (`authkestra-mcp`), 3 security tiers (`Public`, `Scoped`, `HumanApproved`), RFC 8785 JCS parameter challenge digests, and `DownstreamTokenBroker` credential vaulting. |
+| `authkestra-op` | "Be my own identity provider." Full OpenID Provider, RFC 8693 Token Exchange, RFC 8628 Device Flow, DPoP, discovery/JWKS, and attestation issuance. |
+| `authkestra-resource-server` | Token validation at the API edge: `Guard`, multi-issuer JWKS, RFC 9449 DPoP, RFC 8705 mTLS binding, and scope enforcement. |
+| `authkestra-mfa` | FIDO2 Passkeys, TOTP, Magic Links, Email/SMS OTP, Recovery Codes, and mandatory `ReproofRequirement` enrolment gating. |
+| `authkestra-upgrade` | Migrating code from pre-0.13 crates to the consolidated architecture (`RFC-001`). |
+| `authkestra-troubleshoot` | Diagnosing runtime symptoms: `rustls` crypto provider panics, lost OAuth cookies, clock skew, and signature mismatches. |
 
-## Versioning
+---
 
-This pack's minor version tracks the crate's: **`skills` 0.13.x targets `authkestra` 0.13.x**. Every
-`SKILL.md` also states the version it was written against, and cites examples in the main repository
-by tag rather than by `main`, so a citation always points at code matching that version.
+## 🔄 Version Alignment
 
-| Pack | `authkestra` |
-| --- | --- |
-| 0.13.x | 0.13.x |
+This pack's versioning directly tracks the core `authkestra` crate: **`skills` 0.13.x targets `authkestra` 0.13.x**. Every skill states the version it was written against and cites examples in the core repository by git tag.
+
+| Skills Pack | `authkestra` Crate Version |
+| :--- | :--- |
+| **0.13.x** | **0.13.x** (Active) |
 | 0.7.x | 0.7.x |
 
-## How these stay true
+---
 
-The pack lives outside the crate repository, so nothing mechanically forces a skill to be updated when
-an API changes. That gap is closed deliberately:
+## 🧪 Automated Verification
 
-- **`fixtures/` are the tests.** Each fixture is a minimal application depending on `authkestra`
-  **from crates.io** — never a path dependency, never `--all-features`. CI builds them on every push
-  and on a daily schedule, so a published release that invalidates a skill turns this repo red.
-- **Releases notify.** The crate repository dispatches to this one after publishing.
-- **The crate repository's `AGENTS.md`** requires checking this pack when a public API name, signature,
-  route path or feature flag changes.
+To prevent documentation drift, the `fixtures/` directory contains minimal applications that depend on `authkestra` directly from **crates.io**. CI builds these fixtures on every push and nightly, ensuring that published crate changes never break skill instructions.
 
-## Contributing
+---
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Corrections from real integrations are the most valuable thing
-you can send: if a skill led your agent somewhere wrong, that is a bug here, not a mistake you made.
+## 🌐 Ecosystem Links
 
-## License
+- **Authkestra Landing**: [authkestra.com](https://authkestra.com)
+- **Documentation**: [docs.authkestra.com](https://docs.authkestra.com)
+- **Interactive Playground**: [play.authkestra.com](https://play.authkestra.com)
+- **Core Rust Workspace**: [github.com/Authkestra/authkestra](https://github.com/Authkestra/authkestra)
+- **crates.io**: [crates.io/crates/authkestra](https://crates.io/crates/authkestra)
 
-MIT or Apache-2.0, at your option — matching Authkestra itself.
+---
+
+## 📜 License
+
+Dual-licensed under **MIT** or **Apache-2.0**, at your option — matching Authkestra itself.
