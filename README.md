@@ -7,7 +7,7 @@
 [![Single-File Corpus](https://img.shields.io/badge/corpus-llms--full.txt-orange)](https://docs.authkestra.com/llms-full.txt)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/Authkestra/authkestra)
 
-Official Claude Code and AI agent skill pack for integrating and orchestrating **[Authkestra](https://authkestra.com)** — The Compile-Time Safe Identity & AI Agent Authorization Engine for Rust.
+Official Claude Code and AI agent skill pack for integrating and orchestrating **[Authkestra](https://authkestra.com)** -  The Compile-Time Safe Identity & AI Agent Authorization Engine for Rust.
 
 Authkestra is an embedded composition library: nothing works until you have picked the right Cargo feature flags, satisfied the typestate builder (`Engine<S, T>`), implemented storage traits against your own database, and wired adapter extractors. These skills equip coding agents with exact architectural knowledge, eliminating hallucinations and runtime security pitfalls.
 
@@ -74,4 +74,4 @@ To prevent documentation drift, the `fixtures/` directory contains minimal appli
 
 ## 📜 License
 
-Dual-licensed under **MIT** or **Apache-2.0**, at your option — matching Authkestra itself.
+Dual-licensed under **MIT** or **Apache-2.0**, at your option -  matching Authkestra itself.
