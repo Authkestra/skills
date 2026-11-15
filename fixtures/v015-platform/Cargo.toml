@@ -1,0 +1,16 @@
+[package]
+name = "v015-platform"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Stands alone so CI builds it independently from crates.io.
+[workspace]
+
+[dependencies]
+authkestra = { version = "0.15", features = ["axum", "memory", "op", "devsig", "mcp", "policy", "ssf", "resource"] }
+authkestra-resource = "0.15"
+axum = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

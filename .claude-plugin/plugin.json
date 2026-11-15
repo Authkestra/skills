@@ -1,7 +1,7 @@
 {
   "name": "authkestra",
   "description": "Task-shaped skills for integrating Authkestra into a Rust app.",
-  "version": "0.13.0",
+  "version": "0.15.1",
   "author": { "name": "Authkestra", "url": "https://github.com/Authkestra" },
   "homepage": "https://github.com/Authkestra/skills",
   "repository": "https://github.com/Authkestra/skills",

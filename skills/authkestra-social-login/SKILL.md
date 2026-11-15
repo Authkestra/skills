@@ -5,7 +5,7 @@ description: Add GitHub, Google, Discord, or custom OAuth2 and OIDC login to a R
 
 # OAuth2, OIDC & Social Login in Authkestra
 
-Targets `authkestra` **0.13.x**.
+Targets `authkestra` **0.15.x** (`0.15.1`).
 
 Authkestra ships concrete providers for GitHub, Google, and Discord (`features = ["github", "google", "discord"]`), a background-cached OIDC Discovery client (`features = ["oidc"]`), and a simple `OAuthProvider` trait for any custom OAuth2 provider.
 
@@ -15,6 +15,8 @@ Regardless of whether your post-login session is stateful (`SessionStore`) or st
 - `GET /auth/login/{provider}` generates a random `state` (and PKCE verifier / OIDC `nonce`) and stores it in an **encrypted, HTTP-only cookie** (`CookieManagerLayer::new()` on Axum).
 - `GET /auth/callback/{provider}` reads and verifies that cookie against the callback query parameters.
 - **Do not create a database table for OAuth `state` or `nonce`.** And on Axum, never forget `.layer(CookieManagerLayer::new())` on your `Router`, or the callback will fail because the encrypted state cookie was never set.
+- **Multi-instance / Restart Key Rule (`0.15.0+`):** `SessionConfig::default()` generates a fresh random 32-byte `state_encryption_key` per call. Create one `SessionConfig` and share it, or use `SessionConfig::new(shared_32_byte_key)` across replicas or restarts so one instance can decrypt another's OAuth state cookie.
+- **Open-Redirect & Logout CSRF Hardening (`0.15.0+`):** `redirect_to` / `success_url` targets are validated with `is_safe_relative_url` (protocol-relative `//`, `/\`, backslashes, and control characters fall back safely), and `/auth/logout` supports `POST` (as well as `GET`) while rejecting `Sec-Fetch-Site: cross-site` requests with `401`.
 
 ## 2. Stateful Session Mode vs. Stateless JWT Mode
 
@@ -100,7 +102,7 @@ let engine = Authkestra::builder()
     .build();
 ```
 
-## 4. Reference Examples (`authkestra-v0.13.0`)
+## 4. Reference Examples (`authkestra-v0.15.1`)
 
 - Stateful GitHub OAuth: `crates/authkestra/examples/axum_oauth2_github.rs`
 - Stateless OAuth (JWT): `crates/authkestra/examples/axum_oauth_stateless.rs`

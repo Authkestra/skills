@@ -37,21 +37,22 @@ The skills are structured as standard Markdown files with YAML frontmatter locat
 | `authkestra-store` | "Use my own Postgres / Diesel / SeaORM store." Implements `KvStore`, `SessionStore`, `CredentialStore`, and `OpStore` validated via `authkestra-store-testsuite`. |
 | `authkestra-social-login` | GitHub, Google, Discord, or custom OIDC providers, plus the stateless OAuth2 encrypted-cookie contract. |
 | `authkestra-mcp` | Model Context Protocol tool security (`authkestra-mcp`), 3 security tiers (`Public`, `Scoped`, `HumanApproved`), RFC 8785 JCS parameter challenge digests, and `DownstreamTokenBroker` credential vaulting. |
-| `authkestra-op` | "Be my own identity provider." Full OpenID Provider, RFC 8693 Token Exchange, RFC 8628 Device Flow, DPoP, discovery/JWKS, and attestation issuance. |
-| `authkestra-resource-server` | Token validation at the API edge: `Guard`, multi-issuer JWKS, RFC 9449 DPoP, RFC 8705 mTLS binding, and scope enforcement. |
-| `authkestra-mfa` | FIDO2 Passkeys, TOTP, Magic Links, Email/SMS OTP, Recovery Codes, and mandatory `ReproofRequirement` enrolment gating. |
-| `authkestra-upgrade` | Migrating code from pre-0.13 crates to the consolidated architecture (`RFC-001`). |
-| `authkestra-troubleshoot` | Diagnosing runtime symptoms: `rustls` crypto provider panics, lost OAuth cookies, clock skew, and signature mismatches. |
+| `authkestra-op` | "Be my own identity provider." Full OpenID Provider, RFC 8693 Token Exchange & audience binding, RFC 8628 Device Flow, DPoP (`with_dpop_nonces`), discovery/JWKS, `amr`/`acr`, and attestation issuance. |
+| `authkestra-resource-server` | Token validation at the API edge: `Guard`, multi-issuer JWKS, RFC 9449 DPoP (`DPoP-Nonce`), RFC 9470 `StepUpRequirement`, RFC 8705 mTLS binding, Cedar ABAC (`PolicyGuard`), and CAEP/SSF (`PushReceiver`). |
+| `authkestra-mfa` | FIDO2 Passkeys, TOTP (atomic `claim_totp_step`), Magic Links, Email/SMS OTP, Recovery Codes, mandatory `ReproofRequirement` enrolment gating, and `authkestra-devsig` profile v1 (`KeyRole`, JSON refusals). |
+| `authkestra-upgrade` | Migrating code through `0.15.x` (`devsig` profile v1, `claim_totp_step`, `SessionConfig::default`, `allowed_audiences`) and from pre-0.13 crates (`RFC-001`). |
+| `authkestra-troubleshoot` | Diagnosing runtime symptoms: `rustls` crypto provider panics, ephemeral `SessionConfig::default()` keys, `Unsupported` TOTP stores, `use_dpop_nonce`, clock skew, and `devsig` signature mismatches. |
 
 ---
 
 ## 🔄 Version Alignment
 
-This pack's versioning directly tracks the core `authkestra` crate: **`skills` 0.13.x targets `authkestra` 0.13.x**. Every skill states the version it was written against and cites examples in the core repository by git tag.
+This pack's versioning directly tracks the core `authkestra` crate: **`skills` 0.15.x targets `authkestra` 0.15.x (`0.15.1`)**. Every skill states the version it was written against and cites examples in the core repository by git tag.
 
 | Skills Pack | `authkestra` Crate Version |
 | :--- | :--- |
-| **0.13.x** | **0.13.x** (Active) |
+| **0.15.x** | **0.15.x (`0.15.1`, Active)** |
+| 0.13.x | 0.13.x |
 | 0.7.x | 0.7.x |
 
 ---

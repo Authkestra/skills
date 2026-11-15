@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Skills for integrating Authkestra, the framework-agnostic authentication orchestrator for Rust.",
-    "version": "0.13.0"
+    "version": "0.15.1"
   },
   "plugins": [
     {
       "name": "authkestra",
       "source": "./",
-      "description": "Task-shaped skills for adding Authkestra to a Rust app: feature selection, the typestate builder, storage traits, OAuth/OIDC providers, running your own OP, resource-server validation, passwordless/MFA, and upgrades.",
-      "version": "0.13.0",
+      "description": "Task-shaped skills for adding Authkestra to a Rust app: feature selection, the typestate builder, storage traits, OAuth/OIDC providers, MCP agent tool security, running your own OP, resource-server validation, passwordless/MFA/devsig, and upgrades.",
+      "version": "0.15.1",
       "author": { "name": "Authkestra", "url": "https://github.com/Authkestra" },
       "homepage": "https://github.com/Authkestra/skills",
       "license": "MIT OR Apache-2.0",

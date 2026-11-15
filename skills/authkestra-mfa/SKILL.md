@@ -5,14 +5,14 @@ description: Add Passkeys (WebAuthn), TOTP, Magic Links, Email/SMS OTP, Recovery
 
 # Passwordless, Step-Up MFA, Re-Proof Gating & Device Signatures
 
-Targets `authkestra` **0.13.x**.
+Targets `authkestra` **0.15.x** (`0.15.1`).
 
 ## 1. Re-Proof Gating (`ReproofRequirement` — Mandatory for Enrolment in `0.13+`)
 
 Enrolling a passkey, TOTP secret, or recovery code set requires `&Identity` and `&ReproofRequirement` instead of a bare `user_id: &str`. This prevents stolen/stale sessions from enrolling an attacker's factor and prevents confused-deputy bugs:
 
 ```rust
-use authkestra_engine::auth::{AuthMethod, ReproofRequirement};
+use authkestra::core::auth::{AuthMethod, ReproofRequirement};
 
 // Require authentication within the last 300s, and step-up if the user already has this factor enrolled
 let gate = ReproofRequirement::new(300)
@@ -24,7 +24,7 @@ let gate = ReproofRequirement::new(300)
 ## 2. Passkeys (`features = ["webauthn"]`)
 
 ```rust
-use authkestra_engine::auth::{webauthn::WebAuthnAuthMethod, AuthInput, ReproofRequirement};
+use authkestra::core::auth::{webauthn::WebAuthnAuthMethod, AuthInput, ReproofRequirement};
 
 let method = WebAuthnAuthMethod::new(Arc::new(webauthn), cred_store.clone());
 
@@ -51,7 +51,7 @@ let result = engine.authenticate(AuthInput::WebAuthnAuthentication {
 Register TOTP as step-up-only via `.with_mfa_method(TotpAuthMethod::new(cred_store))` (use `.with_totp(cred_store)` only if you want TOTP allowed as a primary factor):
 
 ```rust
-use authkestra_engine::auth::{totp::TotpAuthMethod, AuthInput};
+use authkestra::core::auth::{totp::TotpAuthMethod, AuthInput};
 
 let (secret_b32, otpauth_uri) = totp_method
     .register_totp(&session.identity, &gate, "MyApp", "alice@example.com")
@@ -67,7 +67,12 @@ let result = engine.authenticate(AuthInput::MfaChallenge {
 }).await?;
 ```
 
-## 4. Magic Links, Email/SMS OTP & Recovery Codes (`0.13+`)
+- **Replay & Rotation Rules (`0.15.0+` #432)**:
+  - `TotpAuthMethod::authenticate` calls `CredentialStore::claim_totp_step` atomically on every valid login so a TOTP code cannot be replayed in the same 30s window. Any custom `CredentialStore` storing TOTP credentials **must** implement `claim_totp_step` (default returns `AuthError::Unsupported`).
+  - `register_totp` aborts if retiring superseded TOTP credentials fails.
+  - `MfaTokenClaims` binds `allowed_methods` and rejects MFA continuation using the same method as the primary factor.
+
+## 4. Magic Links, Email/SMS OTP & Recovery Codes
 
 - **Magic Links (`features = ["magic-link"]`)**:
   - `MagicLinkAuthMethod::new(kv_store)` where `kv_store: KvStore<MagicLinkRecord> + AtomicConsume<MagicLinkRecord>`.
@@ -75,30 +80,32 @@ let result = engine.authenticate(AuthInput::MfaChallenge {
   - Verify with `AuthInput::MagicLink { token, binding }`.
 - **Email/SMS OTP (`features = ["otp"]`)**:
   - `OtpAuthMethod::new(kv_store).with_resend_cooldown(Duration::from_secs(60))` where `kv_store` implements `KvStore<OtpChallenge> + AtomicConsume + AtomicDecrement + AtomicInsert`.
-  - `method.mint("user_123", Duration::from_secs(300), OtpChannel::Email, 5)`.
+  - `method.mint("user_123", Duration::from_secs(300), OtpChannel::Email, 5)`. Note (`0.15.0+` #432): zero and sub-second TTLs are rejected, and attempt counters bind to a per-challenge UUID `challenge_id`.
   - Verify with `AuthInput::Otp { subject, code }`.
 - **Recovery Codes (`features = ["recovery-codes"]`)**:
   - Factor-agnostic look-up secret authenticator (`RecoveryCodeAuthMethod::new(cred_store)`).
   - `method.generate(&session.identity, &gate, 10).await?` returns 10 single-use codes (`XXXX-XXXX-XXXX-XXXX`).
   - Redeem with `AuthInput::RecoveryCode { user_id, code }`.
 
-## 5. Device-Bound Signatures (`features = ["devsig"]`)
+## 5. Device-Bound Signatures (`features = ["devsig"]`, Profile v1 in `0.15+`)
 
-`authkestra-devsig` verifies per-request proof-of-possession (`X-Signature` signed by the device/agent private key over method, path, query hash, and SHA-256 body digest `bdh`, paired with `X-Attestation` signed by `authkestra-op`):
+`authkestra-devsig` verifies per-request proof-of-possession (`X-Signature` signed by the device private key over method, path, query hash `qsh`, and SHA-256 body digest `bdh`, paired with `X-Attestation` signed by `authkestra-op`).
+
+In `0.15.0+` (#440), `devsig` implements **profile v1** (`docs/rfc-014-devsig-profile-v1.md`) with shared conformance vectors:
 
 ```rust
-use authkestra_axum::devsig::{AuthDeviceSignature, DeviceSignatureLayer};
-use authkestra_devsig::{DevSig, InMemoryReplayStore, IssuerJwks, VerifierConfig};
+use authkestra::axum::devsig::{refusal_response, AuthDeviceSignature, DeviceSignatureLayer};
+use authkestra::devsig::{DevSig, InMemoryReplayStore, IssuerJwks, KeyRole, Refusal, VerifierConfig};
+use std::sync::Arc;
 
 let devsig = DevSig::builder()
-    .config(VerifierConfig::new(
-        ["https://op.example.com"],
-        [jsonwebtoken::Algorithm::ES256, jsonwebtoken::Algorithm::EdDSA],
-        Duration::from_secs(5),
-        Duration::from_secs(60),
-        "https://api.example.com",
-    ))
+    .config(VerifierConfig::profile_v1(["https://op.example.com"], "https://api.example.com"))
     .jwks(Arc::new(IssuerJwks::new()))
     .replay_store(Arc::new(InMemoryReplayStore::new()))
     .build();
 ```
+
+- **Key Roles & Step-Up**: `att` is a JSON object (`{"status": "active", "role": "user_present" | "ambient"}`). Check `identity.key_role()`: only exact `"user_present"` returns `KeyRole::UserPresent`; absent or unknown values fall back safely to `KeyRole::Ambient`. High-value handlers can reject ambient keys with `refusal_response(Refusal::insufficient_user_authentication())` (`401` + `WWW-Authenticate: DeviceSignature error="insufficient_user_authentication"`), or revoked devices with `refusal_response(Refusal::device_revoked())` (`403`).
+- **Strict `qsh` / `bdh` Rule**: `qsh` and `bdh` must be present *if and only if* the request has a query or body — stray `qsh` or `bdh` is refused (`query_mismatch` / `body_mismatch`).
+- **Wire Refusals**: All adapter refusals emit JSON `{"error":"<code>"}` (`application/json`) plus `WWW-Authenticate: DeviceSignature error="<code>"` on `401`.
+- **Example (`authkestra-v0.15.1`)**: `crates/authkestra/examples/axum_devsig/main.rs` and `crates/authkestra/examples/axum_mfa_server.rs`.
