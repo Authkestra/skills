@@ -21,7 +21,7 @@ If you implemented a custom `CredentialStore` and serve TOTP, override `claim_to
 `SessionConfig::default()` now generates a fresh random 32-byte `state_encryption_key` on every call instead of a static literal. Create the config once and clone it across routes, or call `SessionConfig::new(shared_key)` when multiple instances or restarts must decrypt in-flight OAuth state cookies.
 
 ### D. `ClientRegistration::allowed_audiences` & `at+jwt` (`0.14.0` Breaking, #422)
-Struct literals constructing `ClientRegistration` must include `allowed_audiences: Vec<String>` (and SQLx client inserts must populate the `allowed_audiences` column). In addition, `0.14+` user access tokens always carry `typ: at+jwt` (RFC 9068) even when `allowed_audiences` is empty, so update any resource server expecting `typ: JWT` before upgrading.
+Struct literals constructing `ClientRegistration` must include `allowed_audiences: Vec<String>` (and SQLx client inserts must populate the `allowed_audiences` column). When `allowed_audiences` is non-empty (for example `["api-a"]`), user access tokens set `aud` to the configured resource audience(s) instead of `client_id`. In addition, `0.14+` user access tokens always carry `typ: at+jwt` (RFC 9068) even when `allowed_audiences` is empty. Update resource-server validation that expects `client_id` in `aud` or `typ: JWT` before upgrading.
 
 ### E. `Guard` / `Auth<I>` Structured Refusals (`0.15.1`, #448)
 `Auth<I>` now calls `Guard::authenticate_with_refusal` and returns RFC 6750 / 9449 / 9470 JSON responses with `WWW-Authenticate`, `DPoP-Nonce`, and `Cache-Control: no-store` instead of plain-text 401 strings. Tests asserting raw plain-text bodies on `Auth<I>` rejections should parse JSON `{"error": ...}` instead.

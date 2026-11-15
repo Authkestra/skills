@@ -18,8 +18,8 @@ Every `ToolDefinition` declares one of three security tiers:
 3. **`McpSecurityTier::human_approved(required_scopes, ReproofRequirement, ttl_secs)`**: High-risk actions. Checks scopes first, then canonicalizes tool arguments via **RFC 8785 JSON Canonicalization Scheme (JCS)** and hashes them with SHA-256 (`compute_challenge_digest`) into a pending challenge. The human approves the exact digest via `GET/POST /mcp/approve`; the resulting single-use execution token is redeemed atomically via `AtomicConsume` (`execution_store`), and mutating any argument after approval is rejected with `RPC_PARAMETER_MISMATCH`.
    Clients must send the same `x-session-id` or `mcp-session-id` header from the initial call through approval redemption (otherwise `axum_mcp_router` generates a fresh UUID per request and the session comparison fails, consuming the execution token):
    - Initial `POST /mcp` (`tools/call`) with `x-session-id: <sid>` -> returns `RPC_STEP_UP_REQUIRED` (`-32001`) + approval URL
-   - Human approval via `GET/POST /mcp/approve` (preserving the bound session context)
-   - Approved retry `POST /mcp` (`tools/call`) with the same `x-session-id: <sid>` and execution token (plus identical arguments) -> executes the tool
+   - Human approval via `GET/POST /mcp/approve` (preserving the bound session context). **Security boundary:** `/mcp/approve` only checks that an `Identity` is present and satisfies `ReproofRequirement`; it does not verify human UI confirmation or check whether that identity is allowed to approve the caller's request. Applications must enforce approver authorization (e.g., role/ownership/separation-of-duties checks) and human consent around this endpoint so an agent or caller cannot self-approve.
+   - Approved retry `POST /mcp` (`tools/call`) with the same `x-session-id: <sid>`, identical arguments, and the returned `execution_token` supplied either in the `x-authkestra-approval-token` HTTP header or as `_authkestra_approval_token` in tool arguments -> executes the tool
 
 ```rust
 use authkestra::core::auth::ReproofRequirement;
