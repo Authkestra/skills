@@ -5,7 +5,7 @@ description: Diagnose compiler errors in Authkestra caused by missing Cargo feat
 
 # Diagnosing Authkestra Compiler Errors: Cargo Features vs. Typestate
 
-Targets `authkestra` **0.13.x**.
+Targets `authkestra` **0.15.x** (`0.15.1`).
 
 In Authkestra, two distinct mechanisms hide methods at compile time:
 1. **Cargo feature flags** (`#[cfg(feature = "...")]`)
@@ -23,14 +23,15 @@ Both surface as *"no method named `...` found"* or *"the trait bound `...: FromR
 | `the trait bound Result<Arc<TokenManager>, AxumError>: FromRef<AppState> is not satisfied` | Handler uses `AuthToken`, but `AppState` holds `AkWebAppEngine` (`T = Missing`). | Supply `.jwt_secret(...)` / `.token_manager(...)` on the builder and change the state field type to `AkApiEngine` or `AkEngine`. |
 | `the trait bound Result<Arc<dyn SessionStore>, AxumError>: FromRef<AppState> is not satisfied` | Handler uses `AuthSession`, but `AppState` holds `AkApiEngine` (`S = Missing`). | Supply `.session_store(...)` on the builder and change the state field type to `AkWebAppEngine` or `AkEngine`. |
 | `no method named with_webauthn` or `with_totp` on `EngineBuilder` | Missing Cargo feature. | Add `"webauthn"` or `"totp"` to `authkestra` features in `Cargo.toml`. |
+| `unresolved import authkestra::mcp`, `policy`, or `ssf` (or `mcp_axum_router` / `ssf_axum_router` / `AuthPolicyGuard`) | Missing Cargo feature on facade (and `authkestra-axum`/`authkestra-actix` forwarding). Note that adding `"mcp"` alone without `"axum"` does not expose `authkestra::axum::mcp_axum_router` because the facade only forwards those sub-features to `authkestra-axum` / `authkestra-actix` when the framework feature is enabled. | Add `"mcp"`, `"policy"`, or `"ssf"` alongside `"axum"` (or `"actix"`) in `authkestra` features (also included in `"full"`). |
 | `unresolved import authkestra::store::memory` or `redis` | No storage feature enabled. | Note that `features = ["full"]` deliberately excludes storage backends! Add `"memory"`, `"redis"`, or `"sql-*"` explicitly. |
 | `compile_error!("authkestra-engine needs a TLS backend...")` | `default-features = false` was set without choosing a TLS feature. | Enable either `"rustls-aws-lc-rs"` or `"rustls-no-provider"`. |
 
-## 2. Complete `authkestra` 0.13 Facade Feature Map
+## 2. Complete `authkestra` 0.15 Facade Feature Map
 
 ```toml
 [dependencies]
-authkestra = { version = "0.13", features = [
+authkestra = { version = "0.15", features = [
     # Web framework adapters
     "axum",           # authkestra-axum (macros, session, token, resource)
     # "actix",        # authkestra-actix (session, token, resource)
@@ -57,12 +58,13 @@ authkestra = { version = "0.13", features = [
     "recovery-codes",
     "captcha",
 
-    # Server roles, device signatures, policy & continuous trust
-    "resource",       # authkestra-resource (Guard, JwtStrategy)
-    "op",             # authkestra-op + adapter OP routes
-    "devsig",         # authkestra-devsig + adapter middleware/extractors
-    "policy",         # authkestra-policy (AWS Cedar engine)
-    "ssf",            # authkestra-ssf (OpenID CAEP / RFC 8417 SET receiver)
+    # Server roles, AI agent MCP, device signatures, policy & continuous trust
+    "resource",       # authkestra-resource (Guard, JwtStrategy, StepUpRequirement, ResourceRefusal)
+    "op",             # authkestra-op + adapter OP & attestation routes
+    "devsig",         # authkestra-devsig (profile v1) + adapter middleware/extractors
+    "mcp",            # authkestra-mcp (McpRouter, JCS step-up, EncryptedKvTokenVault) + adapter routes
+    "policy",         # authkestra-policy (CedarPolicyEngine wired into resource, mcp, axum, actix)
+    "ssf",            # authkestra-ssf (OpenID CAEP / RFC 8417 SET receiver + adapter push routes)
 ] }
 ```
 

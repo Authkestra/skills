@@ -5,7 +5,7 @@ description: Add Authkestra authentication to a Rust axum or actix-web applicati
 
 # Adding Authkestra to a Rust app
 
-Targets `authkestra` **0.13.x**. For older code — especially anything importing `authkestra-core`,
+Targets `authkestra` **0.15.x** (`0.15.1`). For older code — especially anything upgrading from `0.13` / `0.14`, importing `authkestra-core`,
 `authkestra-flow`, `authkestra-token`, `authkestra-session`, or enabling the removed `"session"` /
 `"token"` Cargo features — use the `authkestra-upgrade` skill first.
 
@@ -14,12 +14,12 @@ compiler errors that look unrelated to their cause.
 
 ## 1. Pick the facade features
 
-Depend on the `authkestra` facade crate. In `0.13.x`, it re-exports sub-crates, auth methods, and
+Depend on the `authkestra` facade crate. It re-exports sub-crates, auth methods, and
 storage backends behind feature flags:
 
 ```toml
 [dependencies]
-authkestra = { version = "0.13", features = ["axum", "memory", "github"] }
+authkestra = { version = "0.15", features = ["axum", "memory", "github"] }
 ```
 
 | Feature Category | Features | Gives you |
@@ -29,7 +29,7 @@ authkestra = { version = "0.13", features = ["axum", "memory", "github"] }
 | **Storage backends** | `memory`, `redis`, `sql-postgres`, `sql-mysql`, `sql-sqlite` | Built-in `MemoryStore`, `RedisStore`, and `SqlxCredentialStore` (`authkestra::store`) |
 | **OAuth / OIDC** | `oidc`, `github`, `google`, `discord` | OIDC discovery client and concrete OAuth2 providers |
 | **Passwordless & MFA** | `webauthn`, `totp`, `magic-link`, `otp`, `recovery-codes`, `captcha` | First-party authentication methods and CAPTCHA verifiers |
-| **Servers & Policy** | `resource`, `op`, `devsig`, `policy`, `ssf` | Resource server `Guard`, OIDC Provider (`authkestra-op`), device signatures, Cedar policy, CAEP/SSF |
+| **Servers, Agents & Policy** | `resource`, `op`, `devsig`, `mcp`, `policy`, `ssf` | Resource server `Guard`, OIDC Provider (`authkestra-op`), device signatures, MCP tool security, Cedar ABAC (`AuthPolicyGuard`), CAEP/SSF receiver (`ssf_axum_router`) |
 
 Two rules that save a debugging session:
 
@@ -119,12 +119,15 @@ orchestrates authentication over it.
 - `ActixExt::actix_scope()` and `ActixStatelessExt::actix_scope_stateless()`, paired with `.configure(move |cfg| state.configure_authkestra(cfg))`.
 
 OAuth `state` and `nonce` live in **encrypted cookies, never in the database**. This keeps the
-deployment horizontally scalable with no shared session state during the handshake.
+deployment horizontally scalable with no shared session state during the handshake. Note that in
+`0.15+`, `SessionConfig::default()` generates a fresh random 32-byte `state_encryption_key` per
+call: create one `SessionConfig` and share it, or pass a shared key via `SessionConfig::new(key)`
+when multiple replicas or restarts must decrypt each other's OAuth state cookies.
 
-## Runnable examples (`authkestra-v0.13.0`)
+## Runnable examples (`authkestra-v0.15.1`)
 
 Every example lives under `crates/authkestra/examples/` in
-<https://github.com/marcjazz/authkestra/tree/authkestra-v0.13.0/crates/authkestra/examples>:
+<https://github.com/Authkestra/authkestra/tree/authkestra-v0.15.1/crates/authkestra/examples>:
 
 | Goal | Command |
 | --- | --- |
@@ -135,6 +138,10 @@ Every example lives under `crates/authkestra/examples/` in
 | Stateless OAuth (JWT callback) | `cargo run -p authkestra --example axum_oauth_stateless --all-features` |
 | Redis-backed sessions | `cargo run -p authkestra --example axum_session_redis --all-features` |
 | MFA (TOTP + Passkeys) | `cargo run -p authkestra --example axum_mfa_server --all-features` |
+| Resource server (`Guard`) | `cargo run -p authkestra --example axum_resource_server_strategy --all-features` |
+| Embedded OpenID Provider (OP) | `cargo run -p authkestra --example axum_op_server_sqlx --all-features` |
+| Device signatures (`devsig`) | `cargo run -p authkestra --example axum_devsig --all-features` |
+| MCP AI agent server smoke test (`mcp`; exits after 50 ms unless you replace its task abort with `axum::serve`) | `cargo run -p authkestra --example axum_mcp_server --all-features` |
 
 ## Where to go next
 
@@ -143,8 +150,9 @@ Every example lives under `crates/authkestra/examples/` in
 | Missing method or trait bound error | `authkestra-features` |
 | Social login, or a custom provider | `authkestra-social-login` |
 | Your own database behind the store traits | `authkestra-store` |
+| Secure MCP tools & AI agent token vaults | `authkestra-mcp` |
 | Run your own identity provider (OP) | `authkestra-op` |
-| Validate tokens at an API edge | `authkestra-resource-server` |
+| Validate tokens, step-up challenges, Cedar, SSF at an API edge | `authkestra-resource-server` |
 | Passkeys, TOTP, Magic Link, OTP, Recovery Codes, `devsig` | `authkestra-mfa` |
-| Upgrading from older versions | `authkestra-upgrade` |
+| Upgrading from older versions (`<= 0.14`) | `authkestra-upgrade` |
 | Runtime panics, lost state, clock skew | `authkestra-troubleshoot` |
