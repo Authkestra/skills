@@ -33,6 +33,7 @@ use authkestra_resource::{jwt::JwtStrategy, jwt::ValidationConfig, Guard, Policy
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::Router;
+use jsonwebtoken::{Algorithm, DecodingKey};
 use serde::Deserialize;
 use serde_json::json;
 
@@ -128,6 +129,8 @@ fn main() {
 
     let verifier = SetVerifier::builder("https://auth.example.com")
         .audience("https://api.example.com/ssf")
+        .algorithms([Algorithm::HS256])
+        .key(DecodingKey::from_secret(b"demo-ssf-key-only-for-builder-setup"))
         .replay_guard(Arc::new(InMemorySetReplayGuard::new(
             std::time::Duration::from_secs(3600),
         )))

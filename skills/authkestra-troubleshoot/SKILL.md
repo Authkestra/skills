@@ -36,8 +36,8 @@ First: turn on `tracing` for `authkestra` at `debug` level (`RUST_LOG=info,authk
 - **Fix**: Implement atomic compare-and-advance `claim_totp_step` (`matched_step > last_used_step`) on your `CredentialStore`.
 
 ### `POST /auth/logout` or `POST /device/verify` returns `401` or `403` from browser
-- **Cause**: CSRF protections added in `0.15.0` (#431) reject requests carrying `Sec-Fetch-Site: cross-site` (and on `/device/verify`, `Origin` mismatches against `OpConfig::issuer`).
-- **Fix**: Ensure forms/fetches originate from the same origin as `OpConfig::issuer` and use `POST` with the required CSRF token on `/device/verify`.
+- **Cause**: CSRF protections added in `0.15.0` (#431) reject requests carrying `Sec-Fetch-Site: cross-site` (and on `/device/verify`, `Origin` mismatches against `OpConfig::issuer`, plus invalid `csrf_token` values when present). Note that both Axum and Actix `/device/verify` handlers accept requests omitting `csrf_token`, and Actix also skips `csrf_token` validation when `SessionConfig` is absent.
+- **Fix**: Ensure forms/fetches originate from the same origin as `OpConfig::issuer` and configure/validate CSRF tokens explicitly when strict `csrf_token` enforcement is required (do not assume POST or same-origin submissions guarantee `csrf_token` validation on their own).
 
 ### `DPoP` fails with `use_dpop_nonce` or `private_key_jwt` retry fails (`0.15+`)
 - **Causes & Fixes**:

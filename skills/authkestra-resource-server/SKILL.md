@@ -71,6 +71,7 @@ Once any `.trusted_issuer(...)` is added (or `.issuer(...)` is configured in sin
 
 - **DPoP (`require_dpop(true)`)**: Requires a `DPoP` proof header matching the token's `cnf.jkt` and `ath`.
   - **Crucial Trap:** `JwtStrategy` defaults to `NoDpopReplayStore`, which **rejects every DPoP proof** (`503 temporarily_unavailable` via `authenticate_with_refusal`). Always wire `.with_dpop_replay_store(Arc::new(your_replay_store))` when enabling `require_dpop(true)`!
+  - **`dpop_resource_origin` (`htu` check):** Leaving `dpop_resource_origin` unset skips `htu` validation, allowing a captured valid proof to be replayed against another accepting service with its own replay store. Configure `.dpop_resource_origin("https://api.example.com")` to the externally visible origin whenever that origin can be determined reliably.
 - **Resource-Server `DPoP-Nonce` (`0.15.1+`, RFC 9449 §9)**: Chain `.with_dpop_nonces(DpopNonces::new(secret, DEFAULT_NONCE_WINDOW))` onto `JwtStrategy`. Proofs missing a current server nonce receive `401 WWW-Authenticate: DPoP error="use_dpop_nonce"` + a fresh `DPoP-Nonce` header.
 - **mTLS (`require_cert_binding(true)`)**: Verifies `cnf.x5t#S256` against the client TLS certificate.
 

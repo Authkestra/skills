@@ -141,7 +141,7 @@ Every example lives under `crates/authkestra/examples/` in
 | Resource server (`Guard`) | `cargo run -p authkestra --example axum_resource_server_strategy --all-features` |
 | Embedded OpenID Provider (OP) | `cargo run -p authkestra --example axum_op_server_sqlx --all-features` |
 | Device signatures (`devsig`) | `cargo run -p authkestra --example axum_devsig --all-features` |
-| MCP AI agent server (`mcp`) | `cargo run -p authkestra --example axum_mcp_server --all-features` |
+| MCP AI agent server smoke test (`mcp`; exits after 50 ms unless you replace its task abort with `axum::serve`) | `cargo run -p authkestra --example axum_mcp_server --all-features` |
 
 ## Where to go next
 
